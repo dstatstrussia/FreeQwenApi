@@ -1,4 +1,4 @@
-import { getBrowserContext, getAuthenticationStatus, setAuthenticationStatus } from '../browser/browser.js';
+import { getBrowserContext, getAuthenticationStatus, setAuthenticationStatus, ensureBrowserConnection } from '../browser/browser.js';
 import { checkAuthentication, checkVerification } from '../browser/auth.js';
 import { shutdownBrowser, initBrowser } from '../browser/browser.js';
 import { saveAuthToken } from '../browser/session.js';
@@ -66,7 +66,8 @@ export const pagePool = {
     maxSize: PAGE_POOL_SIZE,
 
     async getPage(context) {
-        const baseContext = getBrowserContext();
+        await ensureBrowserConnection();
+        const baseContext = getBrowserContext() || context;
         while (this.pages.length > 0) {
             const page = this.pages.pop();
             try {
@@ -88,7 +89,7 @@ export const pagePool = {
             }
         }
 
-        const newPage = await getPage(context);
+        const newPage = await getPage(baseContext);
         await newPage.goto(CHAT_PAGE_URL, { waitUntil: 'domcontentloaded', timeout: PAGE_TIMEOUT });
 
         if (!authToken) {
